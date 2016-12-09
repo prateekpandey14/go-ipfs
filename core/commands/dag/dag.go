@@ -1,13 +1,16 @@
 package dagcmd
 
 import (
+	"encoding/hex"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"strings"
 
 	cmds "github.com/ipfs/go-ipfs/commands"
 	path "github.com/ipfs/go-ipfs/path"
 
+	zec "github.com/ipfs/go-ipld-zcash"
 	node "gx/ipfs/QmNXjLb18Tx1nvXYjYHs6TTBEVjP8WSYVNuTDioSkyVaSN/go-ipld-node"
 	cid "gx/ipfs/QmTau856czj6wc5UyKQX2MfBQZ9iCZPsuUsVW2b2pRtLVp/go-cid"
 	ipldcbor "gx/ipfs/QmWgx4jceedQkQwSogKbJwTaCQLfwbBpzVej8KRuH4r2sm/go-ipld-cbor"
@@ -80,6 +83,30 @@ into an object of the specified format.
 
 			res.SetOutput(&OutputObject{Cid: c})
 			return
+		case "hex":
+			nds, err := convertHexToType(fi, format)
+			if err != nil {
+				res.SetError(err, cmds.ErrNormal)
+				return
+			}
+
+			blkc, err := n.DAG.Add(nds[0])
+			if err != nil {
+				res.SetError(err, cmds.ErrNormal)
+				return
+			}
+
+			if len(nds) > 1 {
+				for _, nd := range nds[1:] {
+					_, err := n.DAG.Add(nd)
+					if err != nil {
+						res.SetError(err, cmds.ErrNormal)
+						return
+					}
+				}
+			}
+
+			res.SetOutput(&OutputObject{Cid: blkc})
 		default:
 			res.SetError(fmt.Errorf("unrecognized input encoding: %s", ienc), cmds.ErrNormal)
 			return
@@ -137,6 +164,29 @@ func convertJsonToType(r io.Reader, format string) (node.Node, error) {
 		return ipldcbor.FromJson(r)
 	case "dag-pb", "protobuf":
 		return nil, fmt.Errorf("protobuf handling in 'dag' command not yet implemented")
+	default:
+		return nil, fmt.Errorf("unknown target format: %s", format)
+	}
+}
+
+func convertHexToType(r io.Reader, format string) ([]node.Node, error) {
+	data, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+
+	if data[len(data)-1] == '\n' {
+		data = data[:len(data)-1]
+	}
+
+	decd, err := hex.DecodeString(string(data))
+	if err != nil {
+		return nil, err
+	}
+
+	switch format {
+	case "zcash":
+		return zec.DecodeBlockMessage(decd)
 	default:
 		return nil, fmt.Errorf("unknown target format: %s", format)
 	}
