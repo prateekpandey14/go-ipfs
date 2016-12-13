@@ -11,6 +11,8 @@ import (
 	cmds "github.com/ipfs/go-ipfs/commands"
 	path "github.com/ipfs/go-ipfs/path"
 
+	btc "github.com/ipfs/go-ipld-btc"
+	git "github.com/ipfs/go-ipld-git"
 	zec "github.com/ipfs/go-ipld-zcash"
 	node "gx/ipfs/QmNXjLb18Tx1nvXYjYHs6TTBEVjP8WSYVNuTDioSkyVaSN/go-ipld-node"
 	cid "gx/ipfs/QmTau856czj6wc5UyKQX2MfBQZ9iCZPsuUsVW2b2pRtLVp/go-cid"
@@ -110,6 +112,20 @@ into an object of the specified format.
 			}
 
 			res.SetOutput(&OutputObject{Cid: blkc})
+		case "raw":
+			nd, err := convertRawToType(fi, format)
+			if err != nil {
+				res.SetError(err, cmds.ErrNormal)
+				return
+			}
+
+			c, err := n.DAG.Add(nd)
+			if err != nil {
+				res.SetError(err, cmds.ErrNormal)
+				return
+			}
+
+			res.SetOutput(&OutputObject{Cid: c})
 		default:
 			res.SetError(fmt.Errorf("unrecognized input encoding: %s", ienc), cmds.ErrNormal)
 			return
@@ -295,6 +311,17 @@ func convertHexToType(r io.Reader, format string) ([]node.Node, error) {
 	switch format {
 	case "zcash":
 		return zec.DecodeBlockMessage(decd)
+	case "btc", "bitcoin":
+		return btc.DecodeBlockMessage(decd)
+	default:
+		return nil, fmt.Errorf("unknown target format: %s", format)
+	}
+}
+
+func convertRawToType(r io.Reader, format string) (node.Node, error) {
+	switch format {
+	case "git":
+		return git.ParseCompressedObject(r)
 	default:
 		return nil, fmt.Errorf("unknown target format: %s", format)
 	}

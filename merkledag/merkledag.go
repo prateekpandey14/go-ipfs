@@ -11,6 +11,8 @@ import (
 	bserv "github.com/ipfs/go-ipfs/blockservice"
 	offline "github.com/ipfs/go-ipfs/exchange/offline"
 
+	btc "github.com/ipfs/go-ipld-btc"
+	git "github.com/ipfs/go-ipld-git"
 	zec "github.com/ipfs/go-ipld-zcash"
 	node "gx/ipfs/QmNXjLb18Tx1nvXYjYHs6TTBEVjP8WSYVNuTDioSkyVaSN/go-ipld-node"
 	logging "gx/ipfs/QmSpJByNKFX1sCsHBEp3R73FL4NF6FnQTEGyNAXHm2GS52/go-log"
@@ -114,6 +116,12 @@ func decodeBlock(b blocks.Block) (node.Node, error) {
 		return zec.DecodeBlock(b.RawData())
 	case cid.ZcashTx:
 		return zec.DecodeMaybeTx(b.RawData())
+	case cid.BitcoinBlock:
+		return btc.DecodeBlock(b.RawData())
+	case cid.BitcoinTx:
+		return btc.DecodeTx(b.RawData())
+	case cid.Git:
+		return git.ParseObjectFromBuffer(b.RawData())
 	default:
 		return nil, fmt.Errorf("unrecognized object type: %x", c.Type())
 	}
