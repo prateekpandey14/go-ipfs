@@ -40,7 +40,6 @@ import (
 	offroute "github.com/ipfs/go-ipfs/routing/offline"
 	ft "github.com/ipfs/go-ipfs/unixfs"
 
-	pnet "gx/ipfs/QmNVyG8xVHJwKmWKhDnWS2SwUDTUrFNkUmwS7xTasD9wgF/go-libp2p-pnet"
 	p2phost "gx/ipfs/QmPsRtodRuBUir32nz5v4zuSBTSszrR1d3fA6Ahb6eaejj/go-libp2p-host"
 	mssmux "gx/ipfs/QmRVYfZ7tWNHPBzWiG6KWGzvT2hcGems8srihsQE29x1U5/go-smux-multistream"
 	ds "gx/ipfs/QmRWDav6mzWseLWeYfVd5fvUKiVe9xNH29YfMF438fG364/go-datastore"
@@ -50,6 +49,7 @@ import (
 	b58 "gx/ipfs/QmT8rehPR3F6bmwL6zjUN8XpiDBFFpMP2myPdC6ApsWfJf/go-base58"
 	ma "gx/ipfs/QmUAQaWbKxGCUTuoQVvvicbQNZ9APF5pDGWyAZSe93AtKH/go-multiaddr"
 	addrutil "gx/ipfs/QmVDnc2zvyQm8LhT72n22THcshvH7j3qPMnhvjerQER62T/go-addr-util"
+	pnet "gx/ipfs/QmWGiKjgtV6Rxcic8rdj9kY84fjhWJiE7Dp3dEQevgejS1/go-libp2p-pnet"
 	spdy "gx/ipfs/QmWUNsat6Jb19nC5CiJCDXepTkxjdxi3eZqeoB6mrmmaGu/go-smux-spdystream"
 	floodsub "gx/ipfs/QmX3L7GWQ2HfvdwUM7kFJrtKfycamfhricAFSshyHtCB3h/floodsub"
 	metrics "gx/ipfs/QmY2otvyPM2sTaDsczo7Yuosg98sUMCJ9qx1gpPaAPTS9B/go-libp2p-metrics"
