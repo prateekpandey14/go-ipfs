@@ -8,13 +8,15 @@ import (
 	cmds "github.com/ipfs/go-ipfs/commands"
 	path "github.com/ipfs/go-ipfs/path"
 
+	"github.com/ipfs/go-ipfs-cmds/cmdsutil"
+
 	node "gx/ipfs/QmRSU5EqqWVZSNdbU51yXmVoF1uNw3JgTNB6RaiL7DZM16/go-ipld-node"
 	cid "gx/ipfs/QmcTcsTvfaeEBRFo1TkFgT8sRmgi1n1LTZpecfVP8fzpGD/go-cid"
 	ipldcbor "gx/ipfs/QmfMxth6d2po8YGrtSVyNb2u6SFNrPdAsWQoZG83oXRBqX/go-ipld-cbor"
 )
 
 var DagCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline: "Interact with ipld dag objects.",
 		ShortDescription: `
 'ipfs dag' is used for creating and manipulating dag objects.
@@ -34,30 +36,30 @@ type OutputObject struct {
 }
 
 var DagPutCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline: "Add a dag node to ipfs.",
 		ShortDescription: `
 'ipfs dag put' accepts input from a file or stdin and parses it
 into an object of the specified format.
 `,
 	},
-	Arguments: []cmds.Argument{
-		cmds.FileArg("object data", true, false, "The object to put").EnableStdin(),
+	Arguments: []cmdsutil.Argument{
+		cmdsutil.FileArg("object data", true, false, "The object to put").EnableStdin(),
 	},
-	Options: []cmds.Option{
-		cmds.StringOption("format", "f", "Format that the object will be added as.").Default("cbor"),
-		cmds.StringOption("input-enc", "Format that the input object will be.").Default("json"),
+	Options: []cmdsutil.Option{
+		cmdsutil.StringOption("format", "f", "Format that the object will be added as.").Default("cbor"),
+		cmdsutil.StringOption("input-enc", "Format that the input object will be.").Default("json"),
 	},
 	Run: func(req cmds.Request, res cmds.Response) {
 		n, err := req.InvocContext().GetNode()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		fi, err := req.Files().NextFile()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
@@ -68,20 +70,20 @@ into an object of the specified format.
 		case "json":
 			nd, err := convertJsonToType(fi, format)
 			if err != nil {
-				res.SetError(err, cmds.ErrNormal)
+				res.SetError(err, cmdsutil.ErrNormal)
 				return
 			}
 
 			c, err := n.DAG.Add(nd)
 			if err != nil {
-				res.SetError(err, cmds.ErrNormal)
+				res.SetError(err, cmdsutil.ErrNormal)
 				return
 			}
 
 			res.SetOutput(&OutputObject{Cid: c})
 			return
 		default:
-			res.SetError(fmt.Errorf("unrecognized input encoding: %s", ienc), cmds.ErrNormal)
+			res.SetError(fmt.Errorf("unrecognized input encoding: %s", ienc), cmdsutil.ErrNormal)
 			return
 		}
 	},
@@ -99,31 +101,31 @@ into an object of the specified format.
 }
 
 var DagGetCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline: "Get a dag node from ipfs.",
 		ShortDescription: `
 'ipfs dag get' fetches a dag node from ipfs and prints it out in the specifed format.
 `,
 	},
-	Arguments: []cmds.Argument{
-		cmds.StringArg("ref", true, false, "The object to get").EnableStdin(),
+	Arguments: []cmdsutil.Argument{
+		cmdsutil.StringArg("ref", true, false, "The object to get").EnableStdin(),
 	},
 	Run: func(req cmds.Request, res cmds.Response) {
 		n, err := req.InvocContext().GetNode()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		p, err := path.ParsePath(req.Arguments()[0])
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		obj, err := n.Resolver.ResolvePath(req.Context(), p)
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/ipfs/go-ipfs-cmds/cmdsutil"
 	cmds "github.com/ipfs/go-ipfs/commands"
 	core "github.com/ipfs/go-ipfs/core"
 	corerepo "github.com/ipfs/go-ipfs/core/corerepo"
@@ -18,7 +19,7 @@ import (
 )
 
 var PinCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline: "Pin (and unpin) objects to local storage.",
 	},
 
@@ -34,22 +35,22 @@ type PinOutput struct {
 }
 
 var addPinCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline:          "Pin objects to local storage.",
 		ShortDescription: "Stores an IPFS object(s) from a given path locally to disk.",
 	},
 
-	Arguments: []cmds.Argument{
-		cmds.StringArg("ipfs-path", true, true, "Path to object(s) to be pinned.").EnableStdin(),
+	Arguments: []cmdsutil.Argument{
+		cmdsutil.StringArg("ipfs-path", true, true, "Path to object(s) to be pinned.").EnableStdin(),
 	},
-	Options: []cmds.Option{
-		cmds.BoolOption("recursive", "r", "Recursively pin the object linked to by the specified object(s).").Default(true),
+	Options: []cmdsutil.Option{
+		cmdsutil.BoolOption("recursive", "r", "Recursively pin the object linked to by the specified object(s).").Default(true),
 	},
 	Type: PinOutput{},
 	Run: func(req cmds.Request, res cmds.Response) {
 		n, err := req.InvocContext().GetNode()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
@@ -58,13 +59,13 @@ var addPinCmd = &cmds.Command{
 		// set recursive flag
 		recursive, _, err := req.Option("recursive").Bool()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		added, err := corerepo.Pin(n, req.Context(), req.Arguments(), recursive)
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
@@ -95,7 +96,7 @@ var addPinCmd = &cmds.Command{
 }
 
 var rmPinCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline: "Remove pinned objects from local storage.",
 		ShortDescription: `
 Removes the pin from the given object allowing it to be garbage
@@ -103,30 +104,30 @@ collected if needed. (By default, recursively. Use -r=false for direct pins.)
 `,
 	},
 
-	Arguments: []cmds.Argument{
-		cmds.StringArg("ipfs-path", true, true, "Path to object(s) to be unpinned.").EnableStdin(),
+	Arguments: []cmdsutil.Argument{
+		cmdsutil.StringArg("ipfs-path", true, true, "Path to object(s) to be unpinned.").EnableStdin(),
 	},
-	Options: []cmds.Option{
-		cmds.BoolOption("recursive", "r", "Recursively unpin the object linked to by the specified object(s).").Default(true),
+	Options: []cmdsutil.Option{
+		cmdsutil.BoolOption("recursive", "r", "Recursively unpin the object linked to by the specified object(s).").Default(true),
 	},
 	Type: PinOutput{},
 	Run: func(req cmds.Request, res cmds.Response) {
 		n, err := req.InvocContext().GetNode()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		// set recursive flag
 		recursive, _, err := req.Option("recursive").Bool()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		removed, err := corerepo.Unpin(n, req.Context(), req.Arguments(), recursive)
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
@@ -149,7 +150,7 @@ collected if needed. (By default, recursively. Use -r=false for direct pins.)
 }
 
 var listPinCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline: "List objects pinned to local storage.",
 		ShortDescription: `
 Returns a list of objects that are pinned locally.
@@ -192,23 +193,23 @@ Example:
 `,
 	},
 
-	Arguments: []cmds.Argument{
-		cmds.StringArg("ipfs-path", false, true, "Path to object(s) to be listed."),
+	Arguments: []cmdsutil.Argument{
+		cmdsutil.StringArg("ipfs-path", false, true, "Path to object(s) to be listed."),
 	},
-	Options: []cmds.Option{
-		cmds.StringOption("type", "t", "The type of pinned keys to list. Can be \"direct\", \"indirect\", \"recursive\", or \"all\".").Default("all"),
-		cmds.BoolOption("quiet", "q", "Write just hashes of objects.").Default(false),
+	Options: []cmdsutil.Option{
+		cmdsutil.StringOption("type", "t", "The type of pinned keys to list. Can be \"direct\", \"indirect\", \"recursive\", or \"all\".").Default("all"),
+		cmdsutil.BoolOption("quiet", "q", "Write just hashes of objects.").Default(false),
 	},
 	Run: func(req cmds.Request, res cmds.Response) {
 		n, err := req.InvocContext().GetNode()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		typeStr, _, err := req.Option("type").String()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
@@ -216,7 +217,7 @@ Example:
 		case "all", "direct", "indirect", "recursive":
 		default:
 			err = fmt.Errorf("Invalid type '%s', must be one of {direct, indirect, recursive, all}", typeStr)
-			res.SetError(err, cmds.ErrClient)
+			res.SetError(err, cmdsutil.ErrClient)
 			return
 		}
 
@@ -229,7 +230,7 @@ Example:
 		}
 
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 		} else {
 			res.SetOutput(&RefKeyList{Keys: keys})
 		}

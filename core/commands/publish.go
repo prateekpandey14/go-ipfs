@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ipfs/go-ipfs-cmds/cmdsutil"
 	cmds "github.com/ipfs/go-ipfs/commands"
 	core "github.com/ipfs/go-ipfs/core"
 	path "github.com/ipfs/go-ipfs/path"
@@ -19,7 +20,7 @@ import (
 var errNotOnline = errors.New("This command must be run in online mode. Try running 'ipfs daemon' first.")
 
 var PublishCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline: "Publish an object to IPNS.",
 		ShortDescription: `
 IPNS is a PKI namespace, where names are the hashes of public keys, and
@@ -46,43 +47,43 @@ Publish an <ipfs-path> to another public key (not implemented):
 `,
 	},
 
-	Arguments: []cmds.Argument{
-		cmds.StringArg("ipfs-path", true, false, "ipfs path of the object to be published.").EnableStdin(),
+	Arguments: []cmdsutil.Argument{
+		cmdsutil.StringArg("ipfs-path", true, false, "ipfs path of the object to be published.").EnableStdin(),
 	},
-	Options: []cmds.Option{
-		cmds.BoolOption("resolve", "Resolve given path before publishing.").Default(true),
-		cmds.StringOption("lifetime", "t",
+	Options: []cmdsutil.Option{
+		cmdsutil.BoolOption("resolve", "Resolve given path before publishing.").Default(true),
+		cmdsutil.StringOption("lifetime", "t",
 			`Time duration that the record will be valid for. <<default>>
     This accepts durations such as "300s", "1.5h" or "2h45m". Valid time units are
     "ns", "us" (or "µs"), "ms", "s", "m", "h".`).Default("24h"),
-		cmds.StringOption("ttl", "Time duration this record should be cached for (caution: experimental)."),
-		cmds.StringOption("key", "k", "name of key to use").Default("self"),
+		cmdsutil.StringOption("ttl", "Time duration this record should be cached for (caution: experimental)."),
+		cmdsutil.StringOption("key", "k", "name of key to use").Default("self"),
 	},
 	Run: func(req cmds.Request, res cmds.Response) {
 		log.Debug("begin publish")
 		n, err := req.InvocContext().GetNode()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		if !n.OnlineMode() {
 			err := n.SetupOfflineRouting()
 			if err != nil {
-				res.SetError(err, cmds.ErrNormal)
+				res.SetError(err, cmdsutil.ErrNormal)
 				return
 			}
 		}
 
 		if n.Mounts.Ipns != nil && n.Mounts.Ipns.IsActive() {
-			res.SetError(errors.New("You cannot manually publish while IPNS is mounted."), cmds.ErrNormal)
+			res.SetError(errors.New("You cannot manually publish while IPNS is mounted."), cmdsutil.ErrNormal)
 			return
 		}
 
 		pstr := req.Arguments()[0]
 
 		if n.Identity == "" {
-			res.SetError(errors.New("Identity not loaded!"), cmds.ErrNormal)
+			res.SetError(errors.New("Identity not loaded!"), cmdsutil.ErrNormal)
 			return
 		}
 
@@ -93,7 +94,7 @@ Publish an <ipfs-path> to another public key (not implemented):
 		validtime, _, _ := req.Option("lifetime").String()
 		d, err := time.ParseDuration(validtime)
 		if err != nil {
-			res.SetError(fmt.Errorf("error parsing lifetime option: %s", err), cmds.ErrNormal)
+			res.SetError(fmt.Errorf("error parsing lifetime option: %s", err), cmdsutil.ErrNormal)
 			return
 		}
 
@@ -103,7 +104,7 @@ Publish an <ipfs-path> to another public key (not implemented):
 		if ttl, found, _ := req.Option("ttl").String(); found {
 			d, err := time.ParseDuration(ttl)
 			if err != nil {
-				res.SetError(err, cmds.ErrNormal)
+				res.SetError(err, cmdsutil.ErrNormal)
 				return
 			}
 
@@ -113,19 +114,19 @@ Publish an <ipfs-path> to another public key (not implemented):
 		kname, _, _ := req.Option("key").String()
 		k, err := n.GetKey(kname)
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		pth, err := path.ParsePath(pstr)
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		output, err := publish(ctx, n, k, pth, popts)
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 		res.SetOutput(output)

@@ -3,6 +3,7 @@ package commands
 import (
 	"io"
 
+	"github.com/ipfs/go-ipfs-cmds/cmdsutil"
 	cmds "github.com/ipfs/go-ipfs/commands"
 	core "github.com/ipfs/go-ipfs/core"
 	coreunix "github.com/ipfs/go-ipfs/core/coreunix"
@@ -13,37 +14,37 @@ import (
 const progressBarMinSize = 1024 * 1024 * 8 // show progress bar for outputs > 8MiB
 
 var CatCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline:          "Show IPFS object data.",
 		ShortDescription: "Displays the data contained by an IPFS or IPNS object(s) at the given path.",
 	},
 
-	Arguments: []cmds.Argument{
-		cmds.StringArg("ipfs-path", true, true, "The path to the IPFS object(s) to be outputted.").EnableStdin(),
+	Arguments: []cmdsutil.Argument{
+		cmdsutil.StringArg("ipfs-path", true, true, "The path to the IPFS object(s) to be outputted.").EnableStdin(),
 	},
 	Run: func(req cmds.Request, res cmds.Response) {
 		node, err := req.InvocContext().GetNode()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		if !node.OnlineMode() {
 			if err := node.SetupOfflineRouting(); err != nil {
-				res.SetError(err, cmds.ErrNormal)
+				res.SetError(err, cmdsutil.ErrNormal)
 				return
 			}
 		}
 
 		readers, length, err := cat(req.Context(), node, req.Arguments())
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		/*
 			if err := corerepo.ConditionalGC(req.Context(), node, length); err != nil {
-				res.SetError(err, cmds.ErrNormal)
+				res.SetError(err, cmdsutil.ErrNormal)
 				return
 			}
 		*/

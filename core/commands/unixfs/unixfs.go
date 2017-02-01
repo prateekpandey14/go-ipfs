@@ -1,9 +1,12 @@
 package unixfs
 
-import cmds "github.com/ipfs/go-ipfs/commands"
+import (
+	"github.com/ipfs/go-ipfs-cmds/cmdsutil"
+	cmds "github.com/ipfs/go-ipfs/commands"
+)
 
 var UnixFSCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline: "Interact with IPFS objects representing Unix filesystems.",
 		ShortDescription: `
 'ipfs file' provides a familiar interface to file systems represented

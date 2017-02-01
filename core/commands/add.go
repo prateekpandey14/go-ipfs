@@ -7,9 +7,11 @@ import (
 	"github.com/ipfs/go-ipfs/core/coreunix"
 	"gx/ipfs/QmeWjRodbcZFKe5tMN7poEx3izym6osrLSnTLf9UjJZBbs/pb"
 
+	"github.com/ipfs/go-ipfs-cmds/cmdsutil"
+	"github.com/ipfs/go-ipfs-cmds/files"
+
 	blockservice "github.com/ipfs/go-ipfs/blockservice"
 	cmds "github.com/ipfs/go-ipfs/commands"
-	files "github.com/ipfs/go-ipfs/commands/files"
 	core "github.com/ipfs/go-ipfs/core"
 	offline "github.com/ipfs/go-ipfs/exchange/offline"
 	dag "github.com/ipfs/go-ipfs/merkledag"
@@ -36,7 +38,7 @@ const (
 )
 
 var AddCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline: "Add a file or directory to ipfs.",
 		ShortDescription: `
 Adds contents of <path> to ipfs. Use -r to add directories (recursively).
@@ -63,21 +65,21 @@ You can now refer to the added file in a gateway, like so:
 `,
 	},
 
-	Arguments: []cmds.Argument{
-		cmds.FileArg("path", true, true, "The path to a file to be added to ipfs.").EnableRecursive().EnableStdin(),
+	Arguments: []cmdsutil.Argument{
+		cmdsutil.FileArg("path", true, true, "The path to a file to be added to ipfs.").EnableRecursive().EnableStdin(),
 	},
-	Options: []cmds.Option{
-		cmds.OptionRecursivePath, // a builtin option that allows recursive paths (-r, --recursive)
-		cmds.BoolOption(quietOptionName, "q", "Write minimal output."),
-		cmds.BoolOption(silentOptionName, "Write no output."),
-		cmds.BoolOption(progressOptionName, "p", "Stream progress data."),
-		cmds.BoolOption(trickleOptionName, "t", "Use trickle-dag format for dag generation."),
-		cmds.BoolOption(onlyHashOptionName, "n", "Only chunk and hash - do not write to disk."),
-		cmds.BoolOption(wrapOptionName, "w", "Wrap files with a directory object."),
-		cmds.BoolOption(hiddenOptionName, "H", "Include files that are hidden. Only takes effect on recursive add."),
-		cmds.StringOption(chunkerOptionName, "s", "Chunking algorithm to use."),
-		cmds.BoolOption(pinOptionName, "Pin this object when adding.").Default(true),
-		cmds.BoolOption(rawLeavesOptionName, "Use raw blocks for leaf nodes. (experimental)"),
+	Options: []cmdsutil.Option{
+		cmdsutil.OptionRecursivePath, // a builtin option that allows recursive paths (-r, --recursive)
+		cmdsutil.BoolOption(quietOptionName, "q", "Write minimal output."),
+		cmdsutil.BoolOption(silentOptionName, "Write no output."),
+		cmdsutil.BoolOption(progressOptionName, "p", "Stream progress data."),
+		cmdsutil.BoolOption(trickleOptionName, "t", "Use trickle-dag format for dag generation."),
+		cmdsutil.BoolOption(onlyHashOptionName, "n", "Only chunk and hash - do not write to disk."),
+		cmdsutil.BoolOption(wrapOptionName, "w", "Wrap files with a directory object."),
+		cmdsutil.BoolOption(hiddenOptionName, "H", "Include files that are hidden. Only takes effect on recursive add."),
+		cmdsutil.StringOption(chunkerOptionName, "s", "Chunking algorithm to use."),
+		cmdsutil.BoolOption(pinOptionName, "Pin this object when adding.").Default(true),
+		cmdsutil.BoolOption(rawLeavesOptionName, "Use raw blocks for leaf nodes. (experimental)"),
 	},
 	PreRun: func(req cmds.Request) error {
 		quiet, _, _ := req.Option(quietOptionName).Bool()
@@ -120,14 +122,14 @@ You can now refer to the added file in a gateway, like so:
 	Run: func(req cmds.Request, res cmds.Response) {
 		n, err := req.InvocContext().GetNode()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 		// check if repo will exceed storage limit if added
 		// TODO: this doesn't handle the case if the hashed file is already in blocks (deduplicated)
 		// TODO: conditional GC is disabled due to it is somehow not possible to pass the size to the daemon
 		//if err := corerepo.ConditionalGC(req.Context(), n, uint64(size)); err != nil {
-		//	res.SetError(err, cmds.ErrNormal)
+		//	res.SetError(err, cmdsutil.ErrNormal)
 		//	return
 		//}
 
@@ -148,7 +150,7 @@ You can now refer to the added file in a gateway, like so:
 				NilRepo: true,
 			})
 			if err != nil {
-				res.SetError(err, cmds.ErrNormal)
+				res.SetError(err, cmdsutil.ErrNormal)
 				return
 			}
 			n = nilnode
@@ -167,7 +169,7 @@ You can now refer to the added file in a gateway, like so:
 
 		fileAdder, err := coreunix.NewAdder(req.Context(), n.Pinning, n.Blockstore, dserv)
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
@@ -185,7 +187,7 @@ You can now refer to the added file in a gateway, like so:
 			md := dagtest.Mock()
 			mr, err := mfs.NewRoot(req.Context(), md, ft.EmptyDirNode(), nil)
 			if err != nil {
-				res.SetError(err, cmds.ErrNormal)
+				res.SetError(err, cmdsutil.ErrNormal)
 				return
 			}
 
@@ -225,7 +227,7 @@ You can now refer to the added file in a gateway, like so:
 		go func() {
 			defer close(outChan)
 			if err := addAllAndPin(req.Files()); err != nil {
-				res.SetError(err, cmds.ErrNormal)
+				res.SetError(err, cmdsutil.ErrNormal)
 				return
 			}
 
@@ -237,20 +239,20 @@ You can now refer to the added file in a gateway, like so:
 		}
 		outChan, ok := res.Output().(<-chan interface{})
 		if !ok {
-			res.SetError(u.ErrCast(), cmds.ErrNormal)
+			res.SetError(u.ErrCast(), cmdsutil.ErrNormal)
 			return
 		}
 		res.SetOutput(nil)
 
 		quiet, _, err := req.Option("quiet").Bool()
 		if err != nil {
-			res.SetError(u.ErrCast(), cmds.ErrNormal)
+			res.SetError(u.ErrCast(), cmdsutil.ErrNormal)
 			return
 		}
 
 		progress, _, err := req.Option(progressOptionName).Bool()
 		if err != nil {
-			res.SetError(u.ErrCast(), cmds.ErrNormal)
+			res.SetError(u.ErrCast(), cmdsutil.ErrNormal)
 			return
 		}
 
@@ -322,7 +324,7 @@ You can now refer to the added file in a gateway, like so:
 					bar.ShowTimeLeft = true
 				}
 			case <-req.Context().Done():
-				res.SetError(req.Context().Err(), cmds.ErrNormal)
+				res.SetError(req.Context().Err(), cmdsutil.ErrNormal)
 				return
 			}
 		}

@@ -8,11 +8,12 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/ipfs/go-ipfs-cmds/cmdsutil"
 	cmds "github.com/ipfs/go-ipfs/commands"
 )
 
 var ActiveReqsCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline: "List commands run on this IPFS node.",
 		ShortDescription: `
 Lists running and recently run commands.
@@ -21,8 +22,8 @@ Lists running and recently run commands.
 	Run: func(req cmds.Request, res cmds.Response) {
 		res.SetOutput(req.InvocContext().ReqLog.Report())
 	},
-	Options: []cmds.Option{
-		cmds.BoolOption("verbose", "v", "Print extra information.").Default(false),
+	Options: []cmdsutil.Option{
+		cmdsutil.BoolOption("verbose", "v", "Print extra information.").Default(false),
 	},
 	Subcommands: map[string]*cmds.Command{
 		"clear":    clearInactiveCmd,
@@ -86,7 +87,7 @@ Lists running and recently run commands.
 }
 
 var clearInactiveCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline: "Clear inactive requests from the log.",
 	},
 	Run: func(req cmds.Request, res cmds.Response) {
@@ -95,16 +96,16 @@ var clearInactiveCmd = &cmds.Command{
 }
 
 var setRequestClearCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline: "Set how long to keep inactive requests in the log.",
 	},
-	Arguments: []cmds.Argument{
-		cmds.StringArg("time", true, false, "Time to keep inactive requests in log."),
+	Arguments: []cmdsutil.Argument{
+		cmdsutil.StringArg("time", true, false, "Time to keep inactive requests in log."),
 	},
 	Run: func(req cmds.Request, res cmds.Response) {
 		tval, err := time.ParseDuration(req.Arguments()[0])
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 

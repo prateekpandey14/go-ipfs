@@ -11,6 +11,8 @@ import (
 	"sort"
 	"sync"
 
+	"github.com/ipfs/go-ipfs-cmds/cmdsutil"
+
 	cmds "github.com/ipfs/go-ipfs/commands"
 	"github.com/ipfs/go-ipfs/core"
 	commands "github.com/ipfs/go-ipfs/core/commands"
@@ -56,7 +58,7 @@ const (
 )
 
 var daemonCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline: "Run a network-connected IPFS node.",
 		ShortDescription: `
 'ipfs daemon' runs a persistent ipfs daemon that can serve commands
@@ -147,25 +149,25 @@ Headers.
 `,
 	},
 
-	Options: []cmds.Option{
-		cmds.BoolOption(initOptionKwd, "Initialize ipfs with default settings if not already initialized").Default(false),
-		cmds.StringOption(routingOptionKwd, "Overrides the routing option").Default("dht"),
-		cmds.BoolOption(mountKwd, "Mounts IPFS to the filesystem").Default(false),
-		cmds.BoolOption(writableKwd, "Enable writing objects (with POST, PUT and DELETE)").Default(false),
-		cmds.StringOption(ipfsMountKwd, "Path to the mountpoint for IPFS (if using --mount). Defaults to config setting."),
-		cmds.StringOption(ipnsMountKwd, "Path to the mountpoint for IPNS (if using --mount). Defaults to config setting."),
-		cmds.BoolOption(unrestrictedApiAccessKwd, "Allow API access to unlisted hashes").Default(false),
-		cmds.BoolOption(unencryptTransportKwd, "Disable transport encryption (for debugging protocols)").Default(false),
-		cmds.BoolOption(enableGCKwd, "Enable automatic periodic repo garbage collection").Default(false),
-		cmds.BoolOption(adjustFDLimitKwd, "Check and raise file descriptor limits if needed").Default(true),
-		cmds.BoolOption(offlineKwd, "Run offline. Do not connect to the rest of the network but provide local API.").Default(false),
-		cmds.BoolOption(migrateKwd, "If true, assume yes at the migrate prompt. If false, assume no."),
-		cmds.BoolOption(enableFloodSubKwd, "Instantiate the ipfs daemon with the experimental pubsub feature enabled."),
-		cmds.BoolOption(enableMultiplexKwd, "Add the experimental 'go-multiplex' stream muxer to libp2p on construction."),
+	Options: []cmdsutil.Option{
+		cmdsutil.BoolOption(initOptionKwd, "Initialize ipfs with default settings if not already initialized").Default(false),
+		cmdsutil.StringOption(routingOptionKwd, "Overrides the routing option").Default("dht"),
+		cmdsutil.BoolOption(mountKwd, "Mounts IPFS to the filesystem").Default(false),
+		cmdsutil.BoolOption(writableKwd, "Enable writing objects (with POST, PUT and DELETE)").Default(false),
+		cmdsutil.StringOption(ipfsMountKwd, "Path to the mountpoint for IPFS (if using --mount). Defaults to config setting."),
+		cmdsutil.StringOption(ipnsMountKwd, "Path to the mountpoint for IPNS (if using --mount). Defaults to config setting."),
+		cmdsutil.BoolOption(unrestrictedApiAccessKwd, "Allow API access to unlisted hashes").Default(false),
+		cmdsutil.BoolOption(unencryptTransportKwd, "Disable transport encryption (for debugging protocols)").Default(false),
+		cmdsutil.BoolOption(enableGCKwd, "Enable automatic periodic repo garbage collection").Default(false),
+		cmdsutil.BoolOption(adjustFDLimitKwd, "Check and raise file descriptor limits if needed").Default(true),
+		cmdsutil.BoolOption(offlineKwd, "Run offline. Do not connect to the rest of the network but provide local API.").Default(false),
+		cmdsutil.BoolOption(migrateKwd, "If true, assume yes at the migrate prompt. If false, assume no."),
+		cmdsutil.BoolOption(enableFloodSubKwd, "Instantiate the ipfs daemon with the experimental pubsub feature enabled."),
+		cmdsutil.BoolOption(enableMultiplexKwd, "Add the experimental 'go-multiplex' stream muxer to libp2p on construction."),
 
 		// TODO: add way to override addresses. tricky part: updating the config if also --init.
-		// cmds.StringOption(apiAddrKwd, "Address for the daemon rpc API (overrides config)"),
-		// cmds.StringOption(swarmAddrKwd, "Address for the swarm socket (overrides config)"),
+		// cmdsutil.StringOption(apiAddrKwd, "Address for the daemon rpc API (overrides config)"),
+		// cmdsutil.StringOption(swarmAddrKwd, "Address for the swarm socket (overrides config)"),
 	},
 	Subcommands: map[string]*cmds.Command{},
 	Run:         daemonFunc,
@@ -224,7 +226,7 @@ func daemonFunc(req cmds.Request, res cmds.Response) {
 	// running in an uninitialized state.
 	initialize, _, err := req.Option(initOptionKwd).Bool()
 	if err != nil {
-		res.SetError(err, cmds.ErrNormal)
+		res.SetError(err, cmdsutil.ErrNormal)
 		return
 	}
 
@@ -237,7 +239,7 @@ func daemonFunc(req cmds.Request, res cmds.Response) {
 		if !util.FileExists(req.InvocContext().ConfigRoot) {
 			err := initWithDefaults(os.Stdout, req.InvocContext().ConfigRoot)
 			if err != nil {
-				res.SetError(err, cmds.ErrNormal)
+				res.SetError(err, cmdsutil.ErrNormal)
 				return
 			}
 		}
@@ -248,7 +250,7 @@ func daemonFunc(req cmds.Request, res cmds.Response) {
 	repo, err := fsrepo.Open(req.InvocContext().ConfigRoot)
 	switch err {
 	default:
-		res.SetError(err, cmds.ErrNormal)
+		res.SetError(err, cmdsutil.ErrNormal)
 		return
 	case fsrepo.ErrNeedMigration:
 		domigrate, found, _ := req.Option(migrateKwd).Bool()
@@ -261,7 +263,7 @@ func daemonFunc(req cmds.Request, res cmds.Response) {
 		if !domigrate {
 			fmt.Println("Not running migrations of fs-repo now.")
 			fmt.Println("Please get fs-repo-migrations from https://dist.ipfs.io")
-			res.SetError(fmt.Errorf("fs-repo requires migration"), cmds.ErrNormal)
+			res.SetError(fmt.Errorf("fs-repo requires migration"), cmdsutil.ErrNormal)
 			return
 		}
 
@@ -271,13 +273,13 @@ func daemonFunc(req cmds.Request, res cmds.Response) {
 			fmt.Printf("  %s\n", err)
 			fmt.Println("If you think this is a bug, please file an issue and include this whole log output.")
 			fmt.Println("  https://github.com/ipfs/fs-repo-migrations")
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		repo, err = fsrepo.Open(req.InvocContext().ConfigRoot)
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 	case nil:
@@ -286,7 +288,7 @@ func daemonFunc(req cmds.Request, res cmds.Response) {
 
 	cfg, err := ctx.GetConfig()
 	if err != nil {
-		res.SetError(err, cmds.ErrNormal)
+		res.SetError(err, cmdsutil.ErrNormal)
 		return
 	}
 
@@ -308,14 +310,14 @@ func daemonFunc(req cmds.Request, res cmds.Response) {
 
 	routingOption, _, err := req.Option(routingOptionKwd).String()
 	if err != nil {
-		res.SetError(err, cmds.ErrNormal)
+		res.SetError(err, cmdsutil.ErrNormal)
 		return
 	}
 	switch routingOption {
 	case routingOptionSupernodeKwd:
 		servers, err := cfg.SupernodeRouting.ServerIPFSAddrs()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			repo.Close() // because ownership hasn't been transferred to the node
 			return
 		}
@@ -335,14 +337,14 @@ func daemonFunc(req cmds.Request, res cmds.Response) {
 	case routingOptionNoneKwd:
 		ncfg.Routing = core.NilRouterOption
 	default:
-		res.SetError(fmt.Errorf("unrecognized routing option: %s", routingOption), cmds.ErrNormal)
+		res.SetError(fmt.Errorf("unrecognized routing option: %s", routingOption), cmdsutil.ErrNormal)
 		return
 	}
 
 	node, err := core.NewNode(req.Context(), ncfg)
 	if err != nil {
 		log.Error("error from node construction: ", err)
-		res.SetError(err, cmds.ErrNormal)
+		res.SetError(err, cmdsutil.ErrNormal)
 		return
 	}
 	node.SetLocal(false)
@@ -368,7 +370,7 @@ func daemonFunc(req cmds.Request, res cmds.Response) {
 	// construct api endpoint - every time
 	err, apiErrc := serveHTTPApi(req)
 	if err != nil {
-		res.SetError(err, cmds.ErrNormal)
+		res.SetError(err, cmdsutil.ErrNormal)
 		return
 	}
 
@@ -378,7 +380,7 @@ func daemonFunc(req cmds.Request, res cmds.Response) {
 		var err error
 		err, gwErrc = serveHTTPGateway(req)
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 	}
@@ -386,17 +388,17 @@ func daemonFunc(req cmds.Request, res cmds.Response) {
 	// construct fuse mountpoints - if the user provided the --mount flag
 	mount, _, err := req.Option(mountKwd).Bool()
 	if err != nil {
-		res.SetError(err, cmds.ErrNormal)
+		res.SetError(err, cmdsutil.ErrNormal)
 		return
 	}
 	if mount && offline {
 		res.SetError(errors.New("mount is not currently supported in offline mode"),
-			cmds.ErrClient)
+			cmdsutil.ErrClient)
 		return
 	}
 	if mount {
 		if err := mountFuse(req); err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 	}
@@ -404,7 +406,7 @@ func daemonFunc(req cmds.Request, res cmds.Response) {
 	// repo blockstore GC - if --enable-gc flag is present
 	err, gcErrc := maybeRunGC(req, node)
 	if err != nil {
-		res.SetError(err, cmds.ErrNormal)
+		res.SetError(err, cmdsutil.ErrNormal)
 		return
 	}
 
@@ -417,7 +419,7 @@ func daemonFunc(req cmds.Request, res cmds.Response) {
 	for err := range merge(apiErrc, gwErrc, gcErrc) {
 		if err != nil {
 			log.Error(err)
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 		}
 	}
 	return

@@ -6,6 +6,7 @@ import (
 	"io"
 	"sort"
 
+	"github.com/ipfs/go-ipfs-cmds/cmdsutil"
 	cmds "github.com/ipfs/go-ipfs/commands"
 	repo "github.com/ipfs/go-ipfs/repo"
 	config "github.com/ipfs/go-ipfs/repo/config"
@@ -20,7 +21,7 @@ type BootstrapOutput struct {
 var peerOptionDesc = "A peer to add to the bootstrap list (in the format '<multiaddr>/<peerID>')"
 
 var BootstrapCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline: "Show or edit the list of bootstrap peers.",
 		ShortDescription: `
 Running 'ipfs bootstrap' with no arguments will run 'ipfs bootstrap list'.
@@ -39,19 +40,19 @@ Running 'ipfs bootstrap' with no arguments will run 'ipfs bootstrap list'.
 }
 
 var bootstrapAddCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline: "Add peers to the bootstrap list.",
 		ShortDescription: `Outputs a list of peers that were added (that weren't already
 in the bootstrap list).
 ` + bootstrapSecurityWarning,
 	},
 
-	Arguments: []cmds.Argument{
-		cmds.StringArg("peer", false, true, peerOptionDesc).EnableStdin(),
+	Arguments: []cmdsutil.Argument{
+		cmdsutil.StringArg("peer", false, true, peerOptionDesc).EnableStdin(),
 	},
 
-	Options: []cmds.Option{
-		cmds.BoolOption("default", "Add default bootstrap nodes. (Deprecated, use 'default' subcommand instead)"),
+	Options: []cmdsutil.Option{
+		cmdsutil.BoolOption("default", "Add default bootstrap nodes. (Deprecated, use 'default' subcommand instead)"),
 	},
 	Subcommands: map[string]*cmds.Command{
 		"default": bootstrapAddDefaultCmd,
@@ -60,7 +61,7 @@ in the bootstrap list).
 	Run: func(req cmds.Request, res cmds.Response) {
 		deflt, _, err := req.Option("default").Bool()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
@@ -69,7 +70,7 @@ in the bootstrap list).
 			// parse separately for meaningful, correct error.
 			defltPeers, err := config.DefaultBootstrapPeers()
 			if err != nil {
-				res.SetError(err, cmds.ErrNormal)
+				res.SetError(err, cmdsutil.ErrNormal)
 				return
 			}
 
@@ -77,7 +78,7 @@ in the bootstrap list).
 		} else {
 			parsedPeers, err := config.ParseBootstrapPeers(req.Arguments())
 			if err != nil {
-				res.SetError(err, cmds.ErrNormal)
+				res.SetError(err, cmdsutil.ErrNormal)
 				return
 			}
 
@@ -85,25 +86,25 @@ in the bootstrap list).
 		}
 
 		if len(inputPeers) == 0 {
-			res.SetError(errors.New("no bootstrap peers to add"), cmds.ErrClient)
+			res.SetError(errors.New("no bootstrap peers to add"), cmdsutil.ErrClient)
 			return
 		}
 
 		r, err := fsrepo.Open(req.InvocContext().ConfigRoot)
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 		defer r.Close()
 		cfg, err := r.Config()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		added, err := bootstrapAdd(r, cfg, inputPeers)
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
@@ -128,7 +129,7 @@ in the bootstrap list).
 }
 
 var bootstrapAddDefaultCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline: "Add default peers to the bootstrap list.",
 		ShortDescription: `Outputs a list of peers that were added (that weren't already
 in the bootstrap list).`,
@@ -136,26 +137,26 @@ in the bootstrap list).`,
 	Run: func(req cmds.Request, res cmds.Response) {
 		defltPeers, err := config.DefaultBootstrapPeers()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		r, err := fsrepo.Open(req.InvocContext().ConfigRoot)
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		defer r.Close()
 		cfg, err := r.Config()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		added, err := bootstrapAdd(r, cfg, defltPeers)
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
@@ -180,17 +181,17 @@ in the bootstrap list).`,
 }
 
 var bootstrapRemoveCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline: "Remove peers from the bootstrap list.",
 		ShortDescription: `Outputs the list of peers that were removed.
 ` + bootstrapSecurityWarning,
 	},
 
-	Arguments: []cmds.Argument{
-		cmds.StringArg("peer", false, true, peerOptionDesc).EnableStdin(),
+	Arguments: []cmdsutil.Argument{
+		cmdsutil.StringArg("peer", false, true, peerOptionDesc).EnableStdin(),
 	},
-	Options: []cmds.Option{
-		cmds.BoolOption("all", "Remove all bootstrap peers. (Deprecated, use 'all' subcommand)"),
+	Options: []cmdsutil.Option{
+		cmdsutil.BoolOption("all", "Remove all bootstrap peers. (Deprecated, use 'all' subcommand)"),
 	},
 	Subcommands: map[string]*cmds.Command{
 		"all": bootstrapRemoveAllCmd,
@@ -198,19 +199,19 @@ var bootstrapRemoveCmd = &cmds.Command{
 	Run: func(req cmds.Request, res cmds.Response) {
 		all, _, err := req.Option("all").Bool()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		r, err := fsrepo.Open(req.InvocContext().ConfigRoot)
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 		defer r.Close()
 		cfg, err := r.Config()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
@@ -220,14 +221,14 @@ var bootstrapRemoveCmd = &cmds.Command{
 		} else {
 			input, perr := config.ParseBootstrapPeers(req.Arguments())
 			if perr != nil {
-				res.SetError(perr, cmds.ErrNormal)
+				res.SetError(perr, cmdsutil.ErrNormal)
 				return
 			}
 
 			removed, err = bootstrapRemove(r, cfg, input)
 		}
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
@@ -249,7 +250,7 @@ var bootstrapRemoveCmd = &cmds.Command{
 }
 
 var bootstrapRemoveAllCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline:          "Remove all peers from the bootstrap list.",
 		ShortDescription: `Outputs the list of peers that were removed.`,
 	},
@@ -257,19 +258,19 @@ var bootstrapRemoveAllCmd = &cmds.Command{
 	Run: func(req cmds.Request, res cmds.Response) {
 		r, err := fsrepo.Open(req.InvocContext().ConfigRoot)
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 		defer r.Close()
 		cfg, err := r.Config()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		removed, err := bootstrapRemoveAll(r, cfg)
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
@@ -291,7 +292,7 @@ var bootstrapRemoveAllCmd = &cmds.Command{
 }
 
 var bootstrapListCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline:          "Show peers in the bootstrap list.",
 		ShortDescription: "Peers are output in the format '<multiaddr>/<peerID>'.",
 	},
@@ -299,19 +300,19 @@ var bootstrapListCmd = &cmds.Command{
 	Run: func(req cmds.Request, res cmds.Response) {
 		r, err := fsrepo.Open(req.InvocContext().ConfigRoot)
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 		defer r.Close()
 		cfg, err := r.Config()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		peers, err := cfg.BootstrapPeers()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 		res.SetOutput(&BootstrapOutput{config.BootstrapPeerStrings(peers)})

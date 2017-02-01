@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/ipfs/go-ipfs-cmds/cmdsutil"
 	cmds "github.com/ipfs/go-ipfs/commands"
 )
 
@@ -32,12 +33,12 @@ const (
 // and returns a command that lists the subcommands in that root
 func CommandsCmd(root *cmds.Command) *cmds.Command {
 	return &cmds.Command{
-		Helptext: cmds.HelpText{
+		Helptext: cmdsutil.HelpText{
 			Tagline:          "List all available commands.",
 			ShortDescription: `Lists all available commands (and subcommands) and exits.`,
 		},
-		Options: []cmds.Option{
-			cmds.BoolOption(flagsOptionName, "f", "Show command flags").Default(false),
+		Options: []cmdsutil.Option{
+			cmdsutil.BoolOption(flagsOptionName, "f", "Show command flags").Default(false),
 		},
 		Run: func(req cmds.Request, res cmds.Response) {
 			rootCmd := cmd2outputCmd("ipfs", root)

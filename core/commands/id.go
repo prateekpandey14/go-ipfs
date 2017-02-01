@@ -10,6 +10,7 @@ import (
 
 	b58 "gx/ipfs/QmT8rehPR3F6bmwL6zjUN8XpiDBFFpMP2myPdC6ApsWfJf/go-base58"
 
+	"github.com/ipfs/go-ipfs-cmds/cmdsutil"
 	cmds "github.com/ipfs/go-ipfs/commands"
 	core "github.com/ipfs/go-ipfs/core"
 	kb "gx/ipfs/QmRVHVr38ChANF2PUMNKQs7Q4uVWCLVabrfcTG9taNbcVy/go-libp2p-kbucket"
@@ -39,7 +40,7 @@ type IdOutput struct {
 }
 
 var IDCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline: "Show ipfs node id info.",
 		ShortDescription: `
 Prints out information about the specified peer.
@@ -57,16 +58,16 @@ EXAMPLE:
     ipfs id Qmece2RkXhsKe5CRooNisBTh4SK119KrXXGmoK6V3kb8aH -f="<addrs>\n"
 `,
 	},
-	Arguments: []cmds.Argument{
-		cmds.StringArg("peerid", false, false, "Peer.ID of node to look up."),
+	Arguments: []cmdsutil.Argument{
+		cmdsutil.StringArg("peerid", false, false, "Peer.ID of node to look up."),
 	},
-	Options: []cmds.Option{
-		cmds.StringOption("format", "f", "Optional output format."),
+	Options: []cmdsutil.Option{
+		cmdsutil.StringOption("format", "f", "Optional output format."),
 	},
 	Run: func(req cmds.Request, res cmds.Response) {
 		node, err := req.InvocContext().GetNode()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
@@ -74,7 +75,7 @@ EXAMPLE:
 		if len(req.Arguments()) > 0 {
 			id = peer.ID(b58.Decode(req.Arguments()[0]))
 			if len(id) == 0 {
-				res.SetError(cmds.ClientError("Invalid peer id"), cmds.ErrClient)
+				res.SetError(cmds.ClientError("Invalid peer id"), cmdsutil.ErrClient)
 				return
 			}
 		} else {
@@ -84,7 +85,7 @@ EXAMPLE:
 		if id == node.Identity {
 			output, err := printSelf(node)
 			if err != nil {
-				res.SetError(err, cmds.ErrNormal)
+				res.SetError(err, cmdsutil.ErrNormal)
 				return
 			}
 			res.SetOutput(output)
@@ -93,23 +94,23 @@ EXAMPLE:
 
 		// TODO handle offline mode with polymorphism instead of conditionals
 		if !node.OnlineMode() {
-			res.SetError(errors.New(offlineIdErrorMessage), cmds.ErrClient)
+			res.SetError(errors.New(offlineIdErrorMessage), cmdsutil.ErrClient)
 			return
 		}
 
 		p, err := node.Routing.FindPeer(req.Context(), id)
 		if err == kb.ErrLookupFailure {
-			res.SetError(errors.New(offlineIdErrorMessage), cmds.ErrClient)
+			res.SetError(errors.New(offlineIdErrorMessage), cmdsutil.ErrClient)
 			return
 		}
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		output, err := printPeer(node.Peerstore, p.ID)
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 		res.SetOutput(output)

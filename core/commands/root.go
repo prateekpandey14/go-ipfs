@@ -4,6 +4,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/ipfs/go-ipfs-cmds/cmdsutil"
 	cmds "github.com/ipfs/go-ipfs/commands"
 	dag "github.com/ipfs/go-ipfs/core/commands/dag"
 	files "github.com/ipfs/go-ipfs/core/commands/files"
@@ -19,7 +20,7 @@ const (
 )
 
 var Root = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline:  "Global p2p merkle-dag filesystem.",
 		Synopsis: "ipfs [--config=<config> | -c] [--debug=<debug> | -D] [--help=<help>] [-h=<h>] [--local=<local> | -L] [--api=<api>] <command> ...",
 		Subcommands: `
@@ -77,13 +78,13 @@ The CLI will exit with one of the following values:
 1     Failed executions.
 `,
 	},
-	Options: []cmds.Option{
-		cmds.StringOption("config", "c", "Path to the configuration file to use."),
-		cmds.BoolOption("debug", "D", "Operate in debug mode.").Default(false),
-		cmds.BoolOption("help", "Show the full command help text.").Default(false),
-		cmds.BoolOption("h", "Show a short version of the command help text.").Default(false),
-		cmds.BoolOption("local", "L", "Run the command locally, instead of using the daemon.").Default(false),
-		cmds.StringOption(ApiOption, "Use a specific API instance (defaults to /ip4/127.0.0.1/tcp/5001)"),
+	Options: []cmdsutil.Option{
+		cmdsutil.StringOption("config", "c", "Path to the configuration file to use."),
+		cmdsutil.BoolOption("debug", "D", "Operate in debug mode.").Default(false),
+		cmdsutil.BoolOption("help", "Show the full command help text.").Default(false),
+		cmdsutil.BoolOption("h", "Show a short version of the command help text.").Default(false),
+		cmdsutil.BoolOption("local", "L", "Run the command locally, instead of using the daemon.").Default(false),
+		cmdsutil.StringOption(ApiOption, "Use a specific API instance (defaults to /ip4/127.0.0.1/tcp/5001)"),
 	},
 }
 

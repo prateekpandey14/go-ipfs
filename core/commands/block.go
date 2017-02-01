@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"github.com/ipfs/go-ipfs-cmds/cmdsutil"
 	"github.com/ipfs/go-ipfs/blocks"
 	util "github.com/ipfs/go-ipfs/blocks/blockstore/util"
 	cmds "github.com/ipfs/go-ipfs/commands"
@@ -26,7 +27,7 @@ func (bs BlockStat) String() string {
 }
 
 var BlockCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline: "Interact with raw IPFS blocks.",
 		ShortDescription: `
 'ipfs block' is a plumbing command used to manipulate raw IPFS blocks.
@@ -44,7 +45,7 @@ multihash.
 }
 
 var blockStatCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline: "Print information of a raw IPFS block.",
 		ShortDescription: `
 'ipfs block stat' is a plumbing command for retrieving information
@@ -56,13 +57,13 @@ on raw IPFS blocks. It outputs the following to stdout:
 `,
 	},
 
-	Arguments: []cmds.Argument{
-		cmds.StringArg("key", true, false, "The base58 multihash of an existing block to stat.").EnableStdin(),
+	Arguments: []cmdsutil.Argument{
+		cmdsutil.StringArg("key", true, false, "The base58 multihash of an existing block to stat.").EnableStdin(),
 	},
 	Run: func(req cmds.Request, res cmds.Response) {
 		b, err := getBlockForKey(req, req.Arguments()[0])
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
@@ -81,7 +82,7 @@ on raw IPFS blocks. It outputs the following to stdout:
 }
 
 var blockGetCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline: "Get a raw IPFS block.",
 		ShortDescription: `
 'ipfs block get' is a plumbing command for retrieving raw IPFS blocks.
@@ -89,13 +90,13 @@ It outputs to stdout, and <key> is a base58 encoded multihash.
 `,
 	},
 
-	Arguments: []cmds.Argument{
-		cmds.StringArg("key", true, false, "The base58 multihash of an existing block to get.").EnableStdin(),
+	Arguments: []cmdsutil.Argument{
+		cmdsutil.StringArg("key", true, false, "The base58 multihash of an existing block to get.").EnableStdin(),
 	},
 	Run: func(req cmds.Request, res cmds.Response) {
 		b, err := getBlockForKey(req, req.Arguments()[0])
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
@@ -104,7 +105,7 @@ It outputs to stdout, and <key> is a base58 encoded multihash.
 }
 
 var blockPutCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline: "Store input as an IPFS block.",
 		ShortDescription: `
 'ipfs block put' is a plumbing command for storing raw IPFS blocks.
@@ -112,36 +113,36 @@ It reads from stdin, and <key> is a base58 encoded multihash.
 `,
 	},
 
-	Arguments: []cmds.Argument{
-		cmds.FileArg("data", true, false, "The data to be stored as an IPFS block.").EnableStdin(),
+	Arguments: []cmdsutil.Argument{
+		cmdsutil.FileArg("data", true, false, "The data to be stored as an IPFS block.").EnableStdin(),
 	},
-	Options: []cmds.Option{
-		cmds.StringOption("format", "f", "cid format for blocks to be created with.").Default("v0"),
-		cmds.StringOption("mhtype", "multihash hash function").Default("sha2-256"),
-		cmds.IntOption("mhlen", "multihash hash length").Default(-1),
+	Options: []cmdsutil.Option{
+		cmdsutil.StringOption("format", "f", "cid format for blocks to be created with.").Default("v0"),
+		cmdsutil.StringOption("mhtype", "multihash hash function").Default("sha2-256"),
+		cmdsutil.IntOption("mhlen", "multihash hash length").Default(-1),
 	},
 	Run: func(req cmds.Request, res cmds.Response) {
 		n, err := req.InvocContext().GetNode()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		file, err := req.Files().NextFile()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		data, err := ioutil.ReadAll(file)
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		err = file.Close()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
@@ -160,41 +161,41 @@ It reads from stdin, and <key> is a base58 encoded multihash.
 			pref.Version = 0
 			pref.Codec = cid.DagProtobuf
 		default:
-			res.SetError(fmt.Errorf("unrecognized format: %s", format), cmds.ErrNormal)
+			res.SetError(fmt.Errorf("unrecognized format: %s", format), cmdsutil.ErrNormal)
 			return
 		}
 
 		mhtype, _, _ := req.Option("mhtype").String()
 		mhtval, ok := mh.Names[mhtype]
 		if !ok {
-			res.SetError(fmt.Errorf("unrecognized multihash function: %s", mhtype), cmds.ErrNormal)
+			res.SetError(fmt.Errorf("unrecognized multihash function: %s", mhtype), cmdsutil.ErrNormal)
 			return
 		}
 		pref.MhType = mhtval
 
 		mhlen, _, err := req.Option("mhlen").Int()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 		pref.MhLength = mhlen
 
 		bcid, err := pref.Sum(data)
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
 		b, err := blocks.NewBlockWithCid(data, bcid)
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 		log.Debugf("BlockPut key: '%q'", b.Cid())
 
 		k, err := n.Blocks.AddBlock(b)
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 
@@ -237,24 +238,24 @@ func getBlockForKey(req cmds.Request, skey string) (blocks.Block, error) {
 }
 
 var blockRmCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+	Helptext: cmdsutil.HelpText{
 		Tagline: "Remove IPFS block(s).",
 		ShortDescription: `
 'ipfs block rm' is a plumbing command for removing raw ipfs blocks.
 It takes a list of base58 encoded multihashs to remove.
 `,
 	},
-	Arguments: []cmds.Argument{
-		cmds.StringArg("hash", true, true, "Bash58 encoded multihash of block(s) to remove."),
+	Arguments: []cmdsutil.Argument{
+		cmdsutil.StringArg("hash", true, true, "Bash58 encoded multihash of block(s) to remove."),
 	},
-	Options: []cmds.Option{
-		cmds.BoolOption("force", "f", "Ignore nonexistent blocks.").Default(false),
-		cmds.BoolOption("quiet", "q", "Write minimal output.").Default(false),
+	Options: []cmdsutil.Option{
+		cmdsutil.BoolOption("force", "f", "Ignore nonexistent blocks.").Default(false),
+		cmdsutil.BoolOption("quiet", "q", "Write minimal output.").Default(false),
 	},
 	Run: func(req cmds.Request, res cmds.Response) {
 		n, err := req.InvocContext().GetNode()
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 		hashes := req.Arguments()
@@ -264,7 +265,7 @@ It takes a list of base58 encoded multihashs to remove.
 		for _, hash := range hashes {
 			c, err := cid.Decode(hash)
 			if err != nil {
-				res.SetError(fmt.Errorf("invalid content id: %s (%s)", hash, err), cmds.ErrNormal)
+				res.SetError(fmt.Errorf("invalid content id: %s (%s)", hash, err), cmdsutil.ErrNormal)
 				return
 			}
 
@@ -275,7 +276,7 @@ It takes a list of base58 encoded multihashs to remove.
 			Force: force,
 		})
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 			return
 		}
 		res.SetOutput(ch)
@@ -286,14 +287,14 @@ It takes a list of base58 encoded multihashs to remove.
 		}
 		outChan, ok := res.Output().(<-chan interface{})
 		if !ok {
-			res.SetError(u.ErrCast(), cmds.ErrNormal)
+			res.SetError(u.ErrCast(), cmdsutil.ErrNormal)
 			return
 		}
 		res.SetOutput(nil)
 
 		err := util.ProcRmOutput(outChan, res.Stdout(), res.Stderr())
 		if err != nil {
-			res.SetError(err, cmds.ErrNormal)
+			res.SetError(err, cmdsutil.ErrNormal)
 		}
 	},
 	Type: util.RemovedBlock{},
