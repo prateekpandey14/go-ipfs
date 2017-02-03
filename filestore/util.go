@@ -7,7 +7,7 @@ import (
 	//"path/filepath"
 
 	//"github.com/ipfs/go-ipfs/blocks"
-	//"github.com/ipfs/go-ipfs/blocks/blockstore"
+	"github.com/ipfs/go-ipfs/blocks/blockstore"
 	pb "github.com/ipfs/go-ipfs/filestore/pb"
 	dshelp "github.com/ipfs/go-ipfs/thirdparty/ds-help"
 	//posinfo "github.com/ipfs/go-ipfs/thirdparty/posinfo"
@@ -26,7 +26,8 @@ const (
 	StatusFileError Status = 10 // Backing File Error
 	//StatusFileNotFound Status = 11 // Backing File Not Found
 	//StatusFileChanged  Status = 12 // Contents of the file changed
-	StatusOtherError Status = 20 // Internal Error, likely corrupt entry
+	StatusOtherError  Status = 20 // Internal Error, likely corrupt entry
+	StatusKeyNotFound Status = 30
 )
 
 func (s Status) String() string {
@@ -37,13 +38,15 @@ func (s Status) String() string {
 		return "error"
 	case StatusOtherError:
 		return "ERROR"
+	case StatusKeyNotFound:
+		return "missing"
 	default:
 		return "???"
 	}
 }
 
 func (s Status) Format() string {
-	return fmt.Sprintf("%-5s", s.String())
+	return fmt.Sprintf("%-7s", s.String())
 }
 
 type ListRes struct {
@@ -59,20 +62,41 @@ func (r *ListRes) FormatLong() string {
 	switch {
 	case r.Key == nil:
 		return "?????????????????????????????????????????????????"
+	case r.FilePath == "":
+		return r.Key.String()
 	default:
 		return fmt.Sprintf("%-50s %6d %s %d", r.Key, r.Size, r.FilePath, r.Offset)
 	}
 }
 
-func ListAll(fs *Filestore) (func () *ListRes, error) {
+func List(fs *Filestore, key *cid.Cid) *ListRes {
+	return list(fs, false, key)
+}
+
+func ListAll(fs *Filestore) (func() *ListRes, error) {
 	return listAll(fs, false)
 }
 
-func VerifyAll(fs *Filestore) (func () *ListRes, error) {
+func Verify(fs *Filestore, key *cid.Cid) *ListRes {
+	return list(fs, true, key)
+}
+
+func VerifyAll(fs *Filestore) (func() *ListRes, error) {
 	return listAll(fs, true)
 }
 
-func listAll(fs *Filestore, verify bool) (func () *ListRes, error) {
+func list(fs *Filestore, verify bool, key *cid.Cid) *ListRes {
+	dobj, err := fs.fm.getDataObj(key)
+	if err != nil {
+		return mkListRes(key, nil, err)
+	}
+	if verify {
+		_, err = fs.fm.readDataObj(key, dobj)
+	}
+	return mkListRes(key, dobj, err)
+}
+
+func listAll(fs *Filestore, verify bool) (func() *ListRes, error) {
 	q := dsq.Query{}
 	qr, err := fs.fm.ds.Query(q)
 	if err != nil {
@@ -119,7 +143,9 @@ func mkListRes(c *cid.Cid, d *pb.DataObj, err error) *ListRes {
 	status := StatusOk
 	errorMsg := ""
 	if err != nil {
-		if _, ok := err.(*CorruptReferenceError); ok {
+		if err == ds.ErrNotFound || err == blockstore.ErrNotFound {
+			status = StatusKeyNotFound
+		} else if _, ok := err.(*CorruptReferenceError); ok {
 			status = StatusFileError
 		} else {
 			status = StatusOtherError
