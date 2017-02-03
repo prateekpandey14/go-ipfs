@@ -5,7 +5,7 @@ import (
 
 	h "github.com/ipfs/go-ipfs/importer/helpers"
 
-	node "gx/ipfs/QmRSU5EqqWVZSNdbU51yXmVoF1uNw3JgTNB6RaiL7DZM16/go-ipld-node"
+	node "gx/ipfs/QmNXjLb18Tx1nvXYjYHs6TTBEVjP8WSYVNuTDioSkyVaSN/go-ipld-node"
 )
 
 func BalancedLayout(db *h.DagBuilderHelper) (node.Node, error) {

@@ -5,7 +5,7 @@ import (
 
 	mdag "github.com/ipfs/go-ipfs/merkledag"
 	format "github.com/ipfs/go-ipfs/unixfs"
-	cid "gx/ipfs/QmcTcsTvfaeEBRFo1TkFgT8sRmgi1n1LTZpecfVP8fzpGD/go-cid"
+	cid "gx/ipfs/QmTau856czj6wc5UyKQX2MfBQZ9iCZPsuUsVW2b2pRtLVp/go-cid"
 )
 
 type directoryBuilder struct {

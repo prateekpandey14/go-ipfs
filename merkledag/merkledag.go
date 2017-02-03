@@ -11,10 +11,10 @@ import (
 	bserv "github.com/ipfs/go-ipfs/blockservice"
 	offline "github.com/ipfs/go-ipfs/exchange/offline"
 
-	node "gx/ipfs/QmRSU5EqqWVZSNdbU51yXmVoF1uNw3JgTNB6RaiL7DZM16/go-ipld-node"
+	node "gx/ipfs/QmNXjLb18Tx1nvXYjYHs6TTBEVjP8WSYVNuTDioSkyVaSN/go-ipld-node"
 	logging "gx/ipfs/QmSpJByNKFX1sCsHBEp3R73FL4NF6FnQTEGyNAXHm2GS52/go-log"
-	cid "gx/ipfs/QmcTcsTvfaeEBRFo1TkFgT8sRmgi1n1LTZpecfVP8fzpGD/go-cid"
-	ipldcbor "gx/ipfs/QmfMxth6d2po8YGrtSVyNb2u6SFNrPdAsWQoZG83oXRBqX/go-ipld-cbor"
+	cid "gx/ipfs/QmTau856czj6wc5UyKQX2MfBQZ9iCZPsuUsVW2b2pRtLVp/go-cid"
+	ipldcbor "gx/ipfs/QmWgx4jceedQkQwSogKbJwTaCQLfwbBpzVej8KRuH4r2sm/go-ipld-cbor"
 )
 
 var log = logging.Logger("merkledag")
