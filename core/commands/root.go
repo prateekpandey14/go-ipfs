@@ -124,6 +124,7 @@ var rootSubcommands = map[string]*cmds.Command{
 	"update":    ExternalBinary(),
 	"version":   VersionCmd,
 	"bitswap":   BitswapCmd,
+	"filestore": FileStoreCmd,
 }
 
 // RootRO is the readonly version of Root
