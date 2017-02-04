@@ -52,7 +52,7 @@ The output is:
 		}
 		args := req.Arguments()
 		if len(args) > 0 {
-			out := perKeyActionAsChan(args, func(c *cid.Cid) *filestore.ListRes {
+			out := perKeyActionToChan(args, func(c *cid.Cid) *filestore.ListRes {
 				return filestore.List(fs, c)
 			}, req.Context())
 			res.SetOutput(out)
@@ -62,7 +62,7 @@ The output is:
 				res.SetError(err, cmds.ErrNormal)
 				return
 			}
-			out := listResAsChan(next, req.Context())
+			out := listResToChan(next, req.Context())
 			res.SetOutput(out)
 		}
 	},
@@ -128,7 +128,7 @@ For ERROR entries the error will also be printed to stderr.
 		}
 		args := req.Arguments()
 		if len(args) > 0 {
-			out := perKeyActionAsChan(args, func(c *cid.Cid) *filestore.ListRes {
+			out := perKeyActionToChan(args, func(c *cid.Cid) *filestore.ListRes {
 				return filestore.Verify(fs, c)
 			}, req.Context())
 			res.SetOutput(out)
@@ -138,7 +138,7 @@ For ERROR entries the error will also be printed to stderr.
 				res.SetError(err, cmds.ErrNormal)
 				return
 			}
-			out := listResAsChan(next, req.Context())
+			out := listResToChan(next, req.Context())
 			res.SetOutput(out)
 		}
 	},
@@ -175,7 +175,7 @@ func getFilestore(req cmds.Request) (*core.IpfsNode, *filestore.Filestore, error
 	return n, fs, err
 }
 
-func listResAsChan(next func() *filestore.ListRes, ctx context.Context) <-chan interface{} {
+func listResToChan(next func() *filestore.ListRes, ctx context.Context) <-chan interface{} {
 	out := make(chan interface{}, 128)
 	go func() {
 		defer close(out)
@@ -194,7 +194,7 @@ func listResAsChan(next func() *filestore.ListRes, ctx context.Context) <-chan i
 	return out
 }
 
-func perKeyActionAsChan(args []string, action func(*cid.Cid) *filestore.ListRes, ctx context.Context) <-chan interface{} {
+func perKeyActionToChan(args []string, action func(*cid.Cid) *filestore.ListRes, ctx context.Context) <-chan interface{} {
 	out := make(chan interface{}, 128)
 	go func() {
 		defer close(out)
