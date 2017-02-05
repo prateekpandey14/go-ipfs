@@ -12,11 +12,10 @@ import (
 	path "github.com/ipfs/go-ipfs/path"
 
 	btc "github.com/ipfs/go-ipld-btc"
-	git "github.com/ipfs/go-ipld-git"
 	zec "github.com/ipfs/go-ipld-zcash"
+	ipldcbor "gx/ipfs/QmNUh5wvqMyqYW7aJYGLiwrJA2ojSfZTMFeHF6JenEJzzZ/go-ipld-cbor"
 	node "gx/ipfs/QmNXjLb18Tx1nvXYjYHs6TTBEVjP8WSYVNuTDioSkyVaSN/go-ipld-node"
 	cid "gx/ipfs/QmTau856czj6wc5UyKQX2MfBQZ9iCZPsuUsVW2b2pRtLVp/go-cid"
-	ipldcbor "gx/ipfs/QmWgx4jceedQkQwSogKbJwTaCQLfwbBpzVej8KRuH4r2sm/go-ipld-cbor"
 )
 
 var DagCmd = &cmds.Command{
@@ -309,7 +308,7 @@ func convertHexToType(r io.Reader, format string) ([]node.Node, error) {
 	}
 
 	switch format {
-	case "zcash":
+	case "zec", "zcash":
 		return zec.DecodeBlockMessage(decd)
 	case "btc", "bitcoin":
 		return btc.DecodeBlockMessage(decd)
@@ -320,8 +319,6 @@ func convertHexToType(r io.Reader, format string) ([]node.Node, error) {
 
 func convertRawToType(r io.Reader, format string) (node.Node, error) {
 	switch format {
-	case "git":
-		return git.ParseCompressedObject(r)
 	default:
 		return nil, fmt.Errorf("unknown target format: %s", format)
 	}

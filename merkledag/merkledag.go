@@ -12,12 +12,11 @@ import (
 	offline "github.com/ipfs/go-ipfs/exchange/offline"
 
 	btc "github.com/ipfs/go-ipld-btc"
-	git "github.com/ipfs/go-ipld-git"
 	zec "github.com/ipfs/go-ipld-zcash"
+	ipldcbor "gx/ipfs/QmNUh5wvqMyqYW7aJYGLiwrJA2ojSfZTMFeHF6JenEJzzZ/go-ipld-cbor"
 	node "gx/ipfs/QmNXjLb18Tx1nvXYjYHs6TTBEVjP8WSYVNuTDioSkyVaSN/go-ipld-node"
 	logging "gx/ipfs/QmSpJByNKFX1sCsHBEp3R73FL4NF6FnQTEGyNAXHm2GS52/go-log"
 	cid "gx/ipfs/QmTau856czj6wc5UyKQX2MfBQZ9iCZPsuUsVW2b2pRtLVp/go-cid"
-	ipldcbor "gx/ipfs/QmWgx4jceedQkQwSogKbJwTaCQLfwbBpzVej8KRuH4r2sm/go-ipld-cbor"
 )
 
 var log = logging.Logger("merkledag")
@@ -120,8 +119,6 @@ func decodeBlock(b blocks.Block) (node.Node, error) {
 		return btc.DecodeBlock(b.RawData())
 	case cid.BitcoinTx:
 		return btc.DecodeTx(b.RawData())
-	case cid.Git:
-		return git.ParseObjectFromBuffer(b.RawData())
 	default:
 		return nil, fmt.Errorf("unrecognized object type: %x", c.Type())
 	}
