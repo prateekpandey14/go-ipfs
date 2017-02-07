@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"io"
 
 	//ds "github.com/ipfs/go-datastore"
 	//bs "github.com/ipfs/go-ipfs/blocks/blockstore"
@@ -24,6 +25,7 @@ var FileStoreCmd = &cmds.Command{
 	Subcommands: map[string]*cmds.Command{
 		"ls":     lsFileStore,
 		"verify": verifyFileStore,
+		"dups":   dupsFileStore,
 	},
 }
 
@@ -163,6 +165,45 @@ For ERROR entries the error will also be printed to stderr.
 	Type: filestore.ListRes{},
 }
 
+var dupsFileStore = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline: "Print block both in filestore and non-filestore.",
+	},
+	Run: func(req cmds.Request, res cmds.Response) {
+		_, fs, err := getFilestore(req)
+		if err != nil {
+			res.SetError(err, cmds.ErrNormal)
+			return
+		}
+		ch, err := fs.FileManager().AllKeysChan(req.Context())
+		if err != nil {
+			res.SetError(err, cmds.ErrNormal)
+			return
+		}
+		reader, writer := io.Pipe()
+		go func() {
+			defer writer.Close()
+			for cid := range ch {
+				have, err := fs.MainBlockstore().Has(cid)
+				if err != nil {
+					res.SetError(err, cmds.ErrNormal)
+					return
+				}
+				if have {
+					fmt.Fprintf(writer, "%v\n", cid)
+				}
+			}
+		}()
+		res.SetOutput(reader)
+	},
+	Marshalers: cmds.MarshalerMap{
+		cmds.Text: func(res cmds.Response) (io.Reader, error) {
+			return res.(io.Reader), nil
+		},
+	},
+}
+
+
 func getFilestore(req cmds.Request) (*core.IpfsNode, *filestore.Filestore, error) {
 	n, err := req.InvocContext().GetNode()
 	if err != nil {
@@ -217,3 +258,4 @@ func perKeyActionToChan(args []string, action func(*cid.Cid) *filestore.ListRes,
 	}()
 	return out
 }
+
