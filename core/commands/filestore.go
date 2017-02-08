@@ -6,8 +6,8 @@ import (
 	"io"
 
 	//ds "github.com/ipfs/go-datastore"
-	//bs "github.com/ipfs/go-ipfs/blocks/blockstore"
-	//butil "github.com/ipfs/go-ipfs/blocks/blockstore/util"
+	bs "github.com/ipfs/go-ipfs/blocks/blockstore"
+	butil "github.com/ipfs/go-ipfs/blocks/blockstore/util"
 	cmds "github.com/ipfs/go-ipfs/commands"
 	//cli "github.com/ipfs/go-ipfs/commands/cli"
 	//files "github.com/ipfs/go-ipfs/commands/files"
@@ -26,6 +26,7 @@ var FileStoreCmd = &cmds.Command{
 		"ls":     lsFileStore,
 		"verify": verifyFileStore,
 		"dups":   dupsFileStore,
+		"rm":     rmFileStore,
 	},
 }
 
@@ -203,6 +204,59 @@ var dupsFileStore = &cmds.Command{
 	},
 }
 
+var rmFileStore = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline: "Remove IPFS block(s) from just the filestore or blockstore.",
+		ShortDescription: `
+Remove blocks from either the filestore or the main blockstore.
+`,
+	},
+	Arguments: []cmds.Argument{
+		cmds.StringArg("hash", true, true, "Bash58 encoded multihash of block(s) to remove."),
+	},
+	Options: []cmds.Option{
+		cmds.BoolOption("force", "f", "Ignore nonexistent blocks."),
+		cmds.BoolOption("quiet", "q", "Write minimal output."),
+		cmds.BoolOption("non-filestore", "Remove non-filestore blocks"),
+	},
+	Run: func(req cmds.Request, res cmds.Response) {
+		n, fs, err := getFilestore(req)
+		if err != nil {
+			res.SetError(err, cmds.ErrNormal)
+			return
+		}
+		hashes := req.Arguments()
+		force, _, _ := req.Option("force").Bool()
+		quiet, _, _ := req.Option("quiet").Bool()
+		nonFilestore, _, _ := req.Option("non-filestore").Bool()
+		prefix := filestore.FilestorePrefix.String()
+		if nonFilestore {
+			prefix = bs.BlockPrefix.String()
+		}
+		cids := make([]*cid.Cid, 0, len(hashes))
+		for _, hash := range hashes {
+			c, err := cid.Decode(hash)
+			if err != nil {
+				res.SetError(fmt.Errorf("invalid content id: %s (%s)", hash, err), cmds.ErrNormal)
+				return
+			}
+
+			cids = append(cids, c)
+		}
+		ch, err := filestore.RmBlocks(fs, n.Blockstore, n.Pinning, cids, butil.RmBlocksOpts{
+			Prefix: prefix,
+			Quiet: quiet,
+			Force: force,
+		})
+		if err != nil {
+			res.SetError(err, cmds.ErrNormal)
+			return
+		}
+		res.SetOutput(ch)
+	},
+	PostRun: blockRmCmd.PostRun,
+	Type: butil.RemovedBlock{},
+}
 
 func getFilestore(req cmds.Request) (*core.IpfsNode, *filestore.Filestore, error) {
 	n, err := req.InvocContext().GetNode()

@@ -118,12 +118,34 @@ cat <<EOF > dups_expect
 $FILE1_HASH
 EOF
 
-test_filestore_dups() {
+test_filestore_dups_rm() {
 	test_expect_success "'ipfs filestore dups'" '
 		ipfs add --raw-leaves somedir/file1 &&
 		ipfs filestore dups > dups_actual &&
 		test_cmp dups_expect dups_actual
-'
+	'
+
+	test_expect_success "remove non-filestore block of dup ok" '
+		ipfs filestore rm --non-filestore $FILE1_HASH &&
+		ipfs filestore dups > dups_actual &&
+		test_cmp /dev/null dups_actual
+	'
+
+	test_expect_success "block still in filestore" '
+		ipfs filestore ls $FILE1_HASH | grep -q file1
+	'
+
+	test_expect_success "remove non-duplicate pinned block not ok" '
+		test_must_fail ipfs filestore rm $FILE1_HASH 2> rm_err &&
+		grep -q pinned rm_err
+	'
+
+	test_expect_success "remove filestore block of dup ok" '
+		ipfs add --raw-leaves somedir/file1 &&
+		ipfs filestore rm $FILE1_HASH &&
+		ipfs filestore dups > dups_actual &&
+		test_cmp /dev/null dups_actual
+	'
 }
 
 init_ipfs_filestore() {
@@ -146,7 +168,7 @@ test_filestore_adds
 
 test_filestore_verify
 
-test_filestore_dups
+test_filestore_dups_rm
 
 echo "WORKING DIR"
 echo "IPFS PATH = " $IPFS_PATH
@@ -165,7 +187,7 @@ test_filestore_adds
 
 test_filestore_verify
 
-test_filestore_dups
+test_filestore_dups_rm
 
 test_kill_ipfs_daemon
 
