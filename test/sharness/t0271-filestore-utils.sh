@@ -11,13 +11,13 @@ test_description="Test out the filestore nocopy functionality"
 
 test_init_dataset() {
 	test_expect_success "create a dataset" '
-rm -r somedir
-mkdir somedir &&
-random    1000  1 > somedir/file1 &&
-random   10000  2 > somedir/file2 &&
-random 1000000  3 > somedir/file3
-'
-	}
+		rm -r somedir
+		mkdir somedir &&
+		random    1000  1 > somedir/file1 &&
+		random   10000  2 > somedir/file2 &&
+		random 1000000  3 > somedir/file3
+	'
+}
 
 EXPHASH="QmRueCuPMYYvdxWz1vWncF7wzCScEx4qasZXo5aVBb1R4V"
 
@@ -55,63 +55,63 @@ test_filestore_adds() {
 	test_expect_success "'ipfs filestore ls' output looks good'" '
 		ipfs filestore ls | LC_ALL=C sort > ls_actual &&
 		test_cmp ls_expect ls_actual
-'
+	'
 
 	test_expect_success "'ipfs filestore ls HASH' works" '
 		ipfs filestore ls $FILE1_HASH > ls_actual &&
 		grep -q somedir/file1 ls_actual
-'
+	'
 
 	test_expect_success "can retrieve multi-block file" '
 		ipfs cat $FILE3_HASH > file3.data &&
 		test_cmp somedir/file3 file3.data
-'
+	'
 }
 
 test_filestore_verify() {
 	test_expect_success "ipfs filestore verify' output looks good'" '
 		ipfs filestore verify | LC_ALL=C sort > verify_actual
 		test_cmp verify_expect verify_actual
-'
+	'
 
 	test_expect_success "'ipfs filestore verify HASH' works" '
 		ipfs filestore verify $FILE1_HASH > verify_actual &&
 		grep -q somedir/file1 verify_actual
-'
+	'
 
 	test_expect_success "rename a file" '
 		mv somedir/file1 somedir/file1.bk
-'
+	'
 
 	test_expect_success "can not retrieve block after backing file moved" '
 		test_must_fail ipfs cat $FILE1_HASH
-'
+	'
 
 	test_expect_success "'ipfs filestore verify' shows file as missing" '
 		ipfs filestore verify > verify_actual &&
 		grep no-file verify_actual | grep -q somedir/file1
-'
+	'
 
 	test_expect_success "move file back" '
 		mv somedir/file1.bk somedir/file1
-'
+	'
 
 	test_expect_success "block okay now" '
 		ipfs cat $FILE1_HASH > /dev/null
-'
+	'
 
 	test_expect_success "change first bit of file" '
 		dd if=/dev/zero of=somedir/file3 bs=1024 count=1
-'
+	'
 
 	test_expect_success "can not retrieve block after backing file changed" '
 		test_must_fail ipfs cat $FILE3_HASH
-'
+	'
 
 	test_expect_success "'ipfs filestore verify' shows file as changed" '
 		ipfs filestore verify > verify_actual &&
 		grep changed verify_actual | grep -q somedir/file3
-'
+	'
 }
 
 cat <<EOF > dups_expect
