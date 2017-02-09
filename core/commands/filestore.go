@@ -69,29 +69,27 @@ The output is:
 			res.SetOutput(out)
 		}
 	},
-	PostRun: func(req cmds.Request, res cmds.Response) {
-		if res.Error() != nil {
-			return
-		}
-		outChan, ok := res.Output().(<-chan interface{})
-		if !ok {
-			res.SetError(u.ErrCast(), cmds.ErrNormal)
-			return
-		}
-		res.SetOutput(nil)
-		errors := false
-		for r0 := range outChan {
-			r := r0.(*filestore.ListRes)
-			if r.ErrorMsg != "" {
-				errors = true
-				fmt.Fprintf(res.Stderr(), "%s\n", r.ErrorMsg)
-			} else {
-				fmt.Fprintf(res.Stdout(), "%s\n", r.FormatLong())
+	Marshalers: cmds.MarshalerMap{
+		cmds.Text: func(res cmds.Response) (io.Reader, error) {
+			outChan, ok := res.Output().(<-chan interface{})
+			if !ok {
+				return nil, u.ErrCast()
 			}
-		}
-		if errors {
-			res.SetError(fmt.Errorf("errors while displaying some entries"), cmds.ErrNormal)
-		}
+			errors := false
+			for r0 := range outChan {
+				r := r0.(*filestore.ListRes)
+				if r.ErrorMsg != "" {
+					errors = true
+					fmt.Fprintf(res.Stderr(), "%s\n", r.ErrorMsg)
+				} else {
+					fmt.Fprintf(res.Stdout(), "%s\n", r.FormatLong())
+				}
+			}
+			if errors {
+				return nil, fmt.Errorf("errors while displaying some entries")
+			}
+			return nil, nil
+		},
 	},
 	Type: filestore.ListRes{},
 }
@@ -145,23 +143,22 @@ For ERROR entries the error will also be printed to stderr.
 			res.SetOutput(out)
 		}
 	},
-	PostRun: func(req cmds.Request, res cmds.Response) {
-		if res.Error() != nil {
-			return
-		}
-		outChan, ok := res.Output().(<-chan interface{})
-		if !ok {
-			res.SetError(u.ErrCast(), cmds.ErrNormal)
-			return
-		}
-		res.SetOutput(nil)
-		for r0 := range outChan {
-			r := r0.(*filestore.ListRes)
-			if r.Status == filestore.StatusOtherError {
-				fmt.Fprintf(res.Stderr(), "%s\n", r.ErrorMsg)
+	Marshalers: cmds.MarshalerMap{
+		cmds.Text: func(res cmds.Response) (io.Reader, error) {
+			outChan, ok := res.Output().(<-chan interface{})
+			if !ok {
+				return nil, u.ErrCast()
 			}
-			fmt.Fprintf(res.Stdout(), "%s %s\n", r.Status.Format(), r.FormatLong())
-		}
+			res.SetOutput(nil)
+			for r0 := range outChan {
+				r := r0.(*filestore.ListRes)
+				if r.Status == filestore.StatusOtherError {
+					fmt.Fprintf(res.Stderr(), "%s\n", r.ErrorMsg)
+				}
+				fmt.Fprintf(res.Stdout(), "%s %s\n", r.Status.Format(), r.FormatLong())
+			}
+			return nil, nil
+		},
 	},
 	Type: filestore.ListRes{},
 }
@@ -245,8 +242,8 @@ Remove blocks from either the filestore or the main blockstore.
 		}
 		ch, err := filestore.RmBlocks(fs, n.Blockstore, n.Pinning, cids, butil.RmBlocksOpts{
 			Prefix: prefix,
-			Quiet: quiet,
-			Force: force,
+			Quiet:  quiet,
+			Force:  force,
 		})
 		if err != nil {
 			res.SetError(err, cmds.ErrNormal)
@@ -255,7 +252,7 @@ Remove blocks from either the filestore or the main blockstore.
 		res.SetOutput(ch)
 	},
 	PostRun: blockRmCmd.PostRun,
-	Type: butil.RemovedBlock{},
+	Type:    butil.RemovedBlock{},
 }
 
 func getFilestore(req cmds.Request) (*core.IpfsNode, *filestore.Filestore, error) {
@@ -312,4 +309,3 @@ func perKeyActionToChan(args []string, action func(*cid.Cid) *filestore.ListRes,
 	}()
 	return out
 }
-
