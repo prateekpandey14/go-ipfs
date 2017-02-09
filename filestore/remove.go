@@ -2,7 +2,6 @@ package filestore
 
 import (
 	"fmt"
-	//"io"
 
 	bs "github.com/ipfs/go-ipfs/blocks/blockstore"
 	u "github.com/ipfs/go-ipfs/blocks/blockstore/util"
