@@ -97,7 +97,8 @@ test_filestore_verify() {
 	'
 
 	test_expect_success "block okay now" '
-		ipfs cat $FILE1_HASH > /dev/null
+		ipfs cat $FILE1_HASH > file1.data &&
+		test_cmp somedir/file1 file1.data
 	'
 
 	test_expect_success "change first bit of file" '
