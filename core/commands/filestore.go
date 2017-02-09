@@ -178,27 +178,26 @@ var dupsFileStore = &cmds.Command{
 			res.SetError(err, cmds.ErrNormal)
 			return
 		}
-		reader, writer := io.Pipe()
+
+		out := make(chan interface{})
+		res.SetOutput((<-chan interface{})(out))
+
 		go func() {
-			defer writer.Close()
+			defer close(out)
 			for cid := range ch {
 				have, err := fs.MainBlockstore().Has(cid)
 				if err != nil {
-					res.SetError(err, cmds.ErrNormal)
+					out <- &RefWrapper{Err: err.Error()}
 					return
 				}
 				if have {
-					fmt.Fprintf(writer, "%v\n", cid)
+					out <- &RefWrapper{Ref: cid.String()}
 				}
 			}
 		}()
-		res.SetOutput(reader)
 	},
-	Marshalers: cmds.MarshalerMap{
-		cmds.Text: func(res cmds.Response) (io.Reader, error) {
-			return res.(io.Reader), nil
-		},
-	},
+	Marshalers: refsMarshallerMap,
+	Type:       RefWrapper{},
 }
 
 var rmFileStore = &cmds.Command{
